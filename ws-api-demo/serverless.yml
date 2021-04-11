@@ -1,0 +1,80 @@
+service: ws-api-demo
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: ap-southeast-2
+    stage: ${opt:stage, 'dev'}
+    stackName: ws-api-demo
+    websocketsApiName: ws-api-demo
+
+    logRetentionInDays: 1
+    logs:
+        websocket:
+            level: INFO
+
+    environment:
+        tableName: ${self:custom.tableName}
+
+    deploymentBucket:
+        name: ws-api-demo
+
+    iam:
+        role:
+            statements:
+              - Effect: Allow
+                Action:
+                  - dynamodb:DeleteItem
+                  - dynamodb:GetItem
+                  - dynamodb:Scan
+                  - dynamodb:PutItem
+                Resource:
+                  Fn::GetAtt:
+                    - WSConnectionsTable
+                    - Arn
+
+custom:
+    tableName: WSConnections
+
+functions:
+    connect:
+        handler: lambdas/websockets/connect.handler
+        events:
+            - websocket:
+                  route: $connect
+    disconnect:
+        handler: lambdas/websockets/disconnect.handler
+        events:
+            - websocket:
+                  route: $disconnect
+    default:
+        handler: lambdas/websockets/default.handler
+        events:
+            - websocket:
+                  route: $default
+    message:
+        handler: lambdas/websockets/message.handler
+        events:
+            - websocket:
+                  route: message
+    notify:
+        handler: lambdas/websockets/notify.handler
+
+resources:
+    Resources:
+        WSConnectionsTable:
+            Type: AWS::DynamoDB::Table
+            Properties:
+                TableName: ${self:custom.tableName}
+                AttributeDefinitions:
+                    - AttributeName: connectionId
+                      AttributeType: S
+                KeySchema:
+                    - AttributeName: connectionId
+                      KeyType: HASH
+                SSESpecification:
+                    SSEEnabled: true
+                TimeToLiveSpecification:
+                    AttributeName: ttl
+                    Enabled: true
+                BillingMode: PAY_PER_REQUEST

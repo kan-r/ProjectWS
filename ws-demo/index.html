@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html ng-app="WsDemoApp">
+  
+  <head lang="en">
+    <meta charset="utf-8">
+    <title>WS Demo</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="libs/angular.min.js"></script> 
+    <script src="app.js"></script>
+  </head>
+  
+  <body>
+    <h1>Websocket Demo</h1>
+    
+    <div class="grid-container" ng-controller="WsDemoController">
+      <div class="grid-item">
+        <label>WS Endpoint:</label>
+        <input ng-model="endPoint" />
+        <br />
+        <button ng-click="connect(endPoint)">Connect</button>
+        <button ng-click="disconnect()">Disconnect</button>
+        <br />
+        <br />
+        <label>Message:</label>
+        <input ng-model="message" />
+        <br />
+        <button ng-click="send(message)">Send</button>
+        <br />
+        <br />
+        <label>REST Endpoint:</label>
+        <input ng-model="restEndPoint" />
+        <br />
+        <button ng-click="notify(restEndPoint, message)">Notify</button>
+      </div>
+      <div class="grid-item">
+        <div class=grid-container-2>
+          <div class="grid-item-2">
+            <label>Log:</label>
+          </div>
+          <div class="grid-item-2">
+            <textarea id="log" ng-model=log></textarea>
+          </div>
+          <div class="grid-item-2">
+            <button ng-click="clear()">Clear Log</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+
+</html>
