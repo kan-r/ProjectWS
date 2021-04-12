@@ -1,0 +1,15 @@
+service: rest-api-demo
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: ap-southeast-2
+
+functions:
+    getUser:
+        handler: src/user.handler
+        events:
+            - http:
+                  path: user/{Id}
+                  method: GET
+                  cors: true
