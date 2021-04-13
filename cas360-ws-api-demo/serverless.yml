@@ -1,0 +1,83 @@
+service: cas360-ws-api-demo
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: ap-southeast-2
+    stage: ${opt:stage, 'dev'}
+    stackName: cas360-ws-api-demo
+    websocketsApiName: cas360-ws-api-demo
+
+    logRetentionInDays: 1
+    logs:
+        websocket:
+            level: INFO
+
+    environment:
+        tableName: ${self:custom.tableName}
+
+    deploymentBucket:
+        name: deployment.bglcorp.com.au
+
+    iam:
+        role:
+            statements:
+              - Effect: Allow
+                Action:
+                  - dynamodb:DeleteItem
+                  - dynamodb:GetItem
+                  - dynamodb:Scan
+                  - dynamodb:PutItem
+                Resource: 
+                  Fn::GetAtt:
+                    - cas360WSConnectionsTable
+                    - Arn
+
+custom:
+    tableName: cas360WSConnections
+    serverless-iam-roles-per-function:
+        iamGlobalPermissionsBoundary: !Sub arn:aws:iam::741610524140:policy/SecOps-Boundary
+
+functions:
+    connect:
+        handler: lambdas/websockets/connect.handler
+        events:
+            - websocket:
+                  route: $connect
+    disconnect:
+        handler: lambdas/websockets/disconnect.handler
+        events:
+            - websocket:
+                  route: $disconnect
+    default:
+        handler: lambdas/websockets/default.handler
+        events:
+            - websocket:
+                  route: $default
+    message:
+        handler: lambdas/websockets/message.handler
+        events:
+            - websocket:
+                  route: message
+
+resources:
+    Resources:
+        cas360WSConnectionsTable:
+            Type: AWS::DynamoDB::Table
+            Properties:
+                TableName: ${self:custom.tableName}
+                AttributeDefinitions:
+                    - AttributeName: connectionId
+                      AttributeType: S
+                KeySchema:
+                    - AttributeName: connectionId
+                      KeyType: HASH
+                SSESpecification:
+                    SSEEnabled: true
+                TimeToLiveSpecification:
+                    AttributeName: ttl
+                    Enabled: true
+                BillingMode: PAY_PER_REQUEST
+
+plugins:
+    - serverless-iam-roles-per-function
