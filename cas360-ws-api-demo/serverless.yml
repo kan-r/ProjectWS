@@ -81,3 +81,4 @@ resources:
       IamRoleCustomResourcesLambdaExecution:
         Properties:
           PermissionsBoundary: arn:aws:iam::741610524140:policy/SecOps-Boundary
+          
