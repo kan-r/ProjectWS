@@ -1,0 +1,108 @@
+# Full file syntax can be found here:
+# https://serverless.com/framework/docs/providers/aws/guide/serverless.yml/
+
+service: cs-websocket-notifications-kan
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, 'uat'} # Set the default stage used. Default is dev
+  region: ${opt:region, 'ap-southeast-2'} # Overwrite the default region used. Default is ap-southeast-2
+  environment:
+    ENVIRONMENT: ${self:provider.stage}
+    REGION: ${self:provider.region}
+    CS_WS_CLIENTS_TABLE: ${ssm:/${self:provider.stage}/sf360/cs-websocket-notifications/DYNAMODB_TABLE_NAME}
+    CS_WS_AUTH_TABLE: ${ssm:/${self:provider.stage}/sf360/cs-websocket-notifications/DYNAMODB_TBL_WEBSOCKET_AUTH}
+  memorySize: ${ssm:/${self:provider.stage}/sf360/${self:service}/MEMORY_SIZE}
+  deploymentBucket:
+    name: ${ssm:/${self:provider.stage}/sf360/${self:service}/BUCKET_NAME}
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - kms:GenerateDataKey
+        - kms:DescribeKey
+        - kms:Decrypt
+      Resource: ${ssm:/${self:provider.stage}/sf360/${self:service}/KMS_KEY}
+    - Effect: "Allow"
+      Action:
+        - kms:ListKeys
+      Resource: arn:aws:kms:*
+    - Effect: "Allow"
+      Action:
+        - ssm:getParameters
+        - ssm:getParametersByPath
+      Resource:
+        - arn:aws:ssm:${self:provider.region}:#{AWS::AccountId}:parameter/${self:provider.stage}/sf360/${self:service}/*
+        - arn:aws:ssm:${self:provider.region}:#{AWS::AccountId}:parameter/shared/regional/${self:provider.stage}/*
+        - arn:aws:ssm:${self:provider.region}:#{AWS::AccountId}:parameter/shared/cognito-auth-sf360-ext-data-exchange/${self:provider.stage}/*
+    - Effect: "Allow"
+      Action:
+          - "dynamodb:PutItem"
+          - "dynamodb:GetItem"
+          - "dynamodb:DeleteItem"
+          - "dynamodb:Scan"
+      Resource: 
+          - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.CS_WS_CLIENTS_TABLE}"
+          - "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.CS_WS_AUTH_TABLE}"
+    - Effect: "Allow"
+      Action:
+          - "apigateway:POST"
+          - "apigateway:GET"
+      Resource: "arn:aws:apigateway:*::/restapis/*"
+    - Effect: "Allow"
+      Action:
+          - "apigateway:*"
+      Resource: "arn:aws:apigateway:${self:provider.region}::/restapis/a{AWS::AccountId}/*"
+
+
+
+functions:
+  cs_ws_connect:
+    handler: handler.cs_ws_connect
+    events:
+      - websocket:
+          route: $connect # authorizers are only for connect routes
+          authorizer:
+            name: cs_ws_auth
+            identitySource:
+              - 'route.request.querystring.auth'
+  cs_ws_disconnect:
+    handler: handler.cs_ws_disconnect
+    events:
+      - websocket:
+          route: $disconnect
+  cs_ws_default:
+    handler: handler.cs_ws_default
+    events:
+      - websocket:
+          route: $default
+
+  cs_ws_auth:
+    handler: handler.cs_ws_auth
+
+plugins:
+  - serverless-pseudo-parameters
+#  - serverless-domain-manager
+
+
+# Notes: 
+#  - serverless domain manager does not work with custom domain+websocket api as of now
+#  - the domain was created by terraform
+#  - the mapping was done manually via CLI: 
+#      UAT: aws apigatewayv2 create-api-mapping --api-id gwkdu65fdd --api-mapping-key cs-ws --domain-name websocket.uat.bgl360.com.au --stage uat
+#      PRD: aws apigatewayv2 create-api-mapping --api-id wwyonfhfza --api-mapping-key cs-ws --domain-name websocket.production.bgl360.com.au --stage production --profile prod
+#
+#custom:
+#  customDomain:
+#    domainName: 'websocket.uat.bgl360.com.au'
+#    basePath: 'cs-ws'
+#    stage: ${self:provider.stage}
+#    createRoute53Record: false
+
+
+#package:
+#  exclude:
+#     - node_modules/**
+#    - ./**
+#    - "!deploy/**"
+#    - "!node_modules/**"

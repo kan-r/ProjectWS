@@ -1,0 +1,45 @@
+@Library('DevOps') _
+
+pipeline {
+    agent any
+    parameters {
+        string(name: 'BRANCH_NAME',  defaultValue: 'master',  description: 'The branch to deploy')
+        booleanParam(name: 'DEPLOY', defaultValue: true,      description: 'If selected, then this will perform a deployment after the build')
+        choice(name: 'ENV_TYPE',     choices: ['production'], description: 'Choose the environment to deploy into')
+    }
+    environment {
+        ENV_NAME                  = "sf360"
+        DOCKER_NODE_IMAGE         = "node:12"
+        AWS_REGION                = getAWSRegion()
+        DEPLOY_SCRIPT             = "/data/jenkins/deploy-production.sh"
+        DOCKER_SERVERLESS_IMAGE   = "amaysim/serverless:1.67.2"
+        SERVERLESS_PLUGINS        = "serverless-pseudo-parameters"
+        SERVERLESS_PLUGIN_INSTALL = "serverless plugin install -n ${SERVERLESS_PLUGINS}"
+        SERVERLESS_DEPLOY_COMMAND = "serverless deploy --region ${AWS_REGION} --stage ${ENV_TYPE} --force"
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '30', artifactDaysToKeepStr: '14'))
+        timestamps()
+        ansiColor('xterm')
+        disableConcurrentBuilds()
+    }
+    stages {
+        stage('Init') {
+            steps {
+                script {
+                    printEnvironment()
+                }
+            }
+        }
+        stage('Build & Deploy') {
+            steps {
+                sh("docker run --rm -v \"${WORKSPACE}\":/data/ -v \"${HOME}/.npmrc\":/root/.npmrc -e AWS_REGION=${AWS_REGION} -e LAMBDA_ENV=${ENV_TYPE} --entrypoint /bin/sh ${DOCKER_NODE_IMAGE} ${DEPLOY_SCRIPT}")
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "cs-websocket-notifications",
+  "version": "1.0.0",
+  "description": "Application to show notifications to clients via Websockets.",
+  "author": "",
+  "dependencies": {
+    "aws-sdk": "^2.681.0",
+    "serverless-pseudo-parameters": "^2.5.0"
+  },
+  "devDependencies": {
+    "serverless-domain-manager": "^4.1.1"
+  }
+}

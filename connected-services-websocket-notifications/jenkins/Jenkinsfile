@@ -1,0 +1,66 @@
+@Library('DevOps') _
+
+pipeline {
+    agent any
+    parameters {
+        booleanParam(name: 'DEPLOY', defaultValue: true,               description: 'If selected, then this will perform a deployment after the build')
+        choice(name: 'ENV_TYPE',     choices: ['uat','uat2','staging','production'], description: 'Choose the environment to deploy into')
+    }
+    environment {
+        ENV_NAME                  = "sf360"
+        SLACK_CHANNEL             = "connected-service"
+        DOCKER_NODE_IMAGE         = "node:12"
+        AWS_REGION                = getAWSRegion()
+        BUILD_SCRIPT              = "/data/jenkins/build.sh"
+        DEPLOY_SCRIPT             = "/data/jenkins/deploy.sh"
+        DOCKER_SERVERLESS_IMAGE   = "amaysim/serverless:1.67.2"
+        SERVERLESS_PLUGINS        = "serverless-pseudo-parameters"
+        SERVERLESS_PLUGIN_INSTALL = "serverless plugin install -n ${SERVERLESS_PLUGINS}"
+        SERVERLESS_DEPLOY_COMMAND = "serverless deploy --region ${AWS_REGION} --stage ${ENV_TYPE} --force"
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '30', artifactDaysToKeepStr: '14'))
+        timestamps()
+        ansiColor('xterm')
+        disableConcurrentBuilds()
+    }
+    stages {
+        stage('Init') {
+            steps {
+                script {
+                    printEnvironment()
+                }
+
+            }
+        }
+        stage('Test & Build') {
+            steps {
+                sh("docker run --rm -v \"${WORKSPACE}\":/data/ -v \"${HOME}/.npmrc\":/root/.npmrc --entrypoint /bin/sh ${DOCKER_NODE_IMAGE} ${BUILD_SCRIPT}")
+            }
+        }
+        stage('Deploy') {
+            when {
+                expression { params.DEPLOY.toBoolean() == true }
+            }
+            steps {
+                sh("docker run --rm -v \"${WORKSPACE}\":/data/ -v \"${HOME}/.npmrc\":/root/.npmrc -e AWS_REGION=${AWS_REGION} -e LAMBDA_ENV=${ENV_TYPE}  --entrypoint /bin/sh ${DOCKER_NODE_IMAGE} ${DEPLOY_SCRIPT}")
+            }
+        }
+    }
+    post {
+        success {
+            cleanWs()
+        }
+        failure {
+            /*
+            script {
+                slackSend channel: "${SLACK_CHANNEL}",
+                  color: "danger",
+                  message: "@here sf360-ext-data-exchange Build failed. ${BUILD_NUMBER}:${BRANCH_NAME}"
+            }
+            */
+
+            cleanWs()
+        }
+    }
+}
