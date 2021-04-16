@@ -20,6 +20,7 @@ angular.module('WsDemoApp', [])
     };
 
     this.websocket.onmessage = (evt) => {
+      console.log('evt: ', evt);
       let data = JSON.parse(evt.data);
       connectionId = data.connectionId;
       addTolog('RECEIVED: ' + data.message);
@@ -28,6 +29,21 @@ angular.module('WsDemoApp', [])
     this.websocket.onerror = (evt) => {
       addTolog('ERROR: ' + evt.data);
     };
+  }
+
+  function onmessage2(evt){
+    let data = '';
+    let message = '';
+
+    if(evt.data){
+      data = JSON.parse(evt.data);
+      connectionId = data.connectionId;
+      message = 'RECEIVED: ' + data.message;
+    } else if (evt.body){
+      message = 'NOTIFIED: ' + evt.body;
+    }
+    
+    addTolog(message);
   }
 
   $scope.disconnect = function() {
