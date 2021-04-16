@@ -21,7 +21,7 @@ public class ApiGatewayManagementClientServiceImpl implements ApiGatewayManageme
 
     EndpointConfiguration config = new EndpointConfiguration(endPoint, region);
 
-    BasicAWSCredentials awsCreds = new BasicAWSCredentials("AKIAS3OBSJG2JLIB5A7K", "TteKxWzWt2zWDhcU2VF9qlBS4+VTl+4/56W+51cj");
+    BasicAWSCredentials awsCreds = new BasicAWSCredentials("", "");
 
     AmazonApiGatewayManagementApiAsync client = AmazonApiGatewayManagementApiAsyncClientBuilder
         .standard()
