@@ -38,7 +38,7 @@ public class NotificationController {
 	private final boolean isBgl = false;
 
 	private final String REGION = "ap-southeast-2";
-	private final String WS_API_URL = "https://escyqlbofd.execute-api.ap-southeast-2.amazonaws.com/dev/@connections";
+	private final String WS_API_URL = "https://9gd7gaaro0.execute-api.ap-southeast-2.amazonaws.com/dev/@connections";
 	private final String WS_API_URL_BGL = "https://bm5uudicf0.execute-api.ap-southeast-2.amazonaws.com/dev/@connections";
 
 	private final String REST_API_URL = "https://t2voqxnvu2.execute-api.ap-southeast-2.amazonaws.com/notify";

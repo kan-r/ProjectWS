@@ -1,7 +1,6 @@
 angular.module('WsDemoApp', [])
 .controller('WsDemoController', function($scope, $http) {
-//   $scope.endPoint = 'wss://ernpn71ube.execute-api.ap-southeast-2.amazonaws.com/dev';
-  $scope.endPoint = 'wss://escyqlbofd.execute-api.ap-southeast-2.amazonaws.com/dev';
+  $scope.endPoint = 'wss://9gd7gaaro0.execute-api.ap-southeast-2.amazonaws.com/dev';
   $scope.message = 'Hello from the Client';
   $scope.restEndPoint = 'http://localhost:8082/notify';
   
@@ -12,6 +11,7 @@ angular.module('WsDemoApp', [])
     this.websocket = new WebSocket(endPoint);
 
     this.websocket.onopen = (evt) => {
+      console.log('onopen: ', evt);
       addTolog("CONNECTED");
     };
 
@@ -20,7 +20,7 @@ angular.module('WsDemoApp', [])
     };
 
     this.websocket.onmessage = (evt) => {
-      console.log('evt: ', evt);
+      console.log('onmessage: ', evt);
       let data = JSON.parse(evt.data);
       connectionId = data.connectionId;
       addTolog('RECEIVED: ' + data.message);
@@ -29,21 +29,6 @@ angular.module('WsDemoApp', [])
     this.websocket.onerror = (evt) => {
       addTolog('ERROR: ' + evt.data);
     };
-  }
-
-  function onmessage2(evt){
-    let data = '';
-    let message = '';
-
-    if(evt.data){
-      data = JSON.parse(evt.data);
-      connectionId = data.connectionId;
-      message = 'RECEIVED: ' + data.message;
-    } else if (evt.body){
-      message = 'NOTIFIED: ' + evt.body;
-    }
-    
-    addTolog(message);
   }
 
   $scope.disconnect = function() {

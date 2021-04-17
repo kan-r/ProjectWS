@@ -1,19 +1,10 @@
 {
-  "name": "ws-api-demo",
-  "version": "0.0.1",
-  "description": "WebSocket API using the Serverless Framework.",
-  "devDependencies": {
-    "@anttiviljami/serverless-stack-output": "^0.3.1",
-    "serverless": "^2.33.1",
-    "serverless-iam-roles-per-function": "^3.1.0",
-    "serverless-plugin-common-excludes": "^3.0.1",
-    "serverless-plugin-include-dependencies": "^4.1.0",
-    "serverless-stack-output": "^0.2.3"
-  },
-  "scripts": {
-    "broadcast": "sls invoke --function broadcast --data '{ \"body\": \"Hello from server\" }'",
-    "notify": "sls invoke --function notify --data '{\"connectionId\": \"dymu\", \"body\": \"Hello from server\"}'",
-    "sls": "sls",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  }
+    "name": "cas360-ws-api",
+    "version": "1.0.0",
+    "description": "WebSocket API using the Serverless Framework.",
+    "author": "Kan",
+    "dependencies": {
+        "aws-sdk": "^2.850.0",
+        "serverless-pseudo-parameters": "^2.5.0"
+    }
 }
