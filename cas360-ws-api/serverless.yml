@@ -6,6 +6,7 @@ provider:
   region: ${opt:region, 'ap-southeast-2'}
   stage: ${opt:stage, 'dev'}
   stackName: cas360-ws-api
+  apiName: cas360-api
   websocketsApiName: cas360-ws-api
   lambdaHashingVersion: "20201221"
   logRetentionInDays: 1
@@ -14,6 +15,14 @@ provider:
       level: INFO
 
   environment:
+    WS_ENDPOINT:
+      Fn::Join:
+        - ''
+        - - Ref: WebsocketsApi
+          - .execute-api.
+          - Ref: AWS::Region
+          - .amazonaws.com/
+          - ${self:provider.stage}
     WS_CONNECTIONS_TABLE: cas360WSConnections
 
   deploymentBucket:
@@ -26,10 +35,7 @@ provider:
       statements:
         - Effect: Allow
           Action:
-            - dynamodb:DeleteItem
-            - dynamodb:GetItem
-            - dynamodb:Scan
-            - dynamodb:PutItem
+            - dynamodb:*
           Resource:
             Fn::GetAtt:
               - cas360WSConnectionsTable
@@ -60,6 +66,13 @@ functions:
     events:
       - websocket:
           route: $default
+  notify:
+    handler: handler.notify
+    events:
+      - http:
+          path: notifications/{Id}
+          method: POST
+          cors: true
 
 resources:
   Resources:
