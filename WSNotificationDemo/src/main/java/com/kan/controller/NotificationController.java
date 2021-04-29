@@ -16,7 +16,7 @@ public class NotificationController {
 
 	private final boolean isBgl = false;
 
-	private final String REST_API_URL = "https://6qsj0b74q4.execute-api.ap-southeast-2.amazonaws.com/dev/";
+	private final String REST_API_URL = "https://6qsj0b74q4.execute-api.ap-southeast-2.amazonaws.com/dev/notifications/";
 	private final String REST_API_URL_BGL = "https://6qsj0b74q4.execute-api.ap-southeast-2.amazonaws.com/dev/";
 
 

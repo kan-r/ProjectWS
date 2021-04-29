@@ -24,8 +24,9 @@ angular.module('WsDemoApp', [])
 
     this.websocket.onmessage = (evt) => {
       console.log('onmessage: ', evt);
-      let data = JSON.parse(evt.data);
-      addTolog('RECEIVED: ' + data.message);
+    //   let data = JSON.parse(evt.data);
+    //   addTolog('RECEIVED: ' + data.message);
+      addTolog('RECEIVED: ' + evt.data);
     };
 
     this.websocket.onerror = (evt) => {
