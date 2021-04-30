@@ -6,8 +6,9 @@ provider:
   region: ${opt:region, 'ap-southeast-2'}
   stage: ${opt:stage, 'dev'}
   stackName: cas360-ws-api
-  apiName: cas360-api
+  apiName: cas360-rest-api
   websocketsApiName: cas360-ws-api
+  endpointType: regional
   lambdaHashingVersion: "20201221"
   logRetentionInDays: 1
   logs:
@@ -43,12 +44,12 @@ provider:
         - Effect: Allow
           Action:
             - apigateway:POST
-            - apigateway:GET
-          Resource: arn:aws:apigateway:*::/restapis/*
-        - Effect: Allow
-          Action:
-            - apigateway:*
-          Resource: arn:aws:apigateway:${self:provider.region}::/restapis/a{AWS::AccountId}/*
+            # - apigateway:GET
+          Resource: arn:aws:apigateway:${self:provider.region}::/restapis/*
+        # - Effect: Allow
+        #   Action:
+        #     - apigateway:*
+        #   Resource: arn:aws:apigateway:${self:provider.region}::/restapis/a{AWS::AccountId}/*
 
 functions:
   connect:
@@ -88,6 +89,9 @@ resources:
               KeyType: HASH
           SSESpecification:
             SSEEnabled: true
+          TimeToLiveSpecification:
+            AttributeName: ttl
+            Enabled: true
           BillingMode: PAY_PER_REQUEST
 # extensions:
 #   IamRoleCustomResourcesLambdaExecution:

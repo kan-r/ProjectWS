@@ -26,7 +26,9 @@ exports.connect = async (event) => {
       connectionId: connectionId,
       clientId: clientId,
       requestId: requestId,
-      requestTime: requestTime
+      requestTime: requestTime,
+    //   1 hr
+      ttl: parseInt((Date.now() / 1000) + 3600)
     }
   };
 
@@ -98,6 +100,7 @@ exports.notify = async (event) => {
 exports.authorize = async (event) => {
     let authToken = event.queryStringParameters.auth
     let resource = event.methodArn;
+    let effect = true;
   
     console.log("authToken " + authToken + " resource " + resource);
   
