@@ -1,0 +1,100 @@
+service: cas360-ws-api
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: ${opt:region, 'ap-southeast-2'}
+  stage: ${opt:stage, 'dev'}
+  stackName: cas360-ws-api
+  apiName: cas360-api
+  websocketsApiName: cas360-ws-api
+  lambdaHashingVersion: "20201221"
+  logRetentionInDays: 1
+  logs:
+    websocket:
+      level: INFO
+
+  environment:
+    WS_ENDPOINT:
+      Fn::Join:
+        - ''
+        - - Ref: WebsocketsApi
+          - .execute-api.
+          - Ref: AWS::Region
+          - .amazonaws.com/
+          - ${self:provider.stage}
+    WS_CONNECTIONS_TABLE: cas360WSConnections
+
+  # deploymentBucket:
+  #   name: deployment.kan-r.com
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:*
+          Resource:
+            Fn::GetAtt:
+              - cas360WSConnectionsTable
+              - Arn
+        - Effect: Allow
+          Action:
+            - apigateway:POST
+            - apigateway:GET
+          Resource: arn:aws:apigateway:*::/restapis/*
+
+custom:
+    dynamodb:
+        stages:
+            - dev
+        start:
+            port: 8000
+            inMemory: true
+            migrate: true
+        migration:
+            dir: offline/migrations
+
+functions:
+  connect:
+    handler: handler.connect
+    events:
+      - websocket:
+          route: $connect
+  disconnect:
+    handler: handler.disconnect
+    events:
+      - websocket:
+          route: $disconnect
+  default:
+    handler: handler.default
+    events:
+      - websocket:
+          route: $default
+  notify:
+    handler: handler.notify
+    events:
+      - http:
+          path: notifications/{Id}
+          method: POST
+          cors: true
+
+resources:
+  Resources:
+    cas360WSConnectionsTable:
+        Type: AWS::DynamoDB::Table
+        Properties:
+          TableName: ${self:provider.environment.WS_CONNECTIONS_TABLE}
+          AttributeDefinitions:
+            - AttributeName: connectionId
+              AttributeType: S
+          KeySchema:
+            - AttributeName: connectionId
+              KeyType: HASH
+          SSESpecification:
+            SSEEnabled: true
+          BillingMode: PAY_PER_REQUEST
+
+plugins:
+  - serverless-offline
+  - serverless-dynamodb-local
