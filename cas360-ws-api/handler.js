@@ -1,6 +1,7 @@
 'use strict';
 
-const aws = require('aws-sdk')
+const aws = require('aws-sdk');
+const https = require('https');
 const dynamo = new aws.DynamoDB.DocumentClient();
 
 const WS_CONNECTIONS_TABLE = process.env.WS_CONNECTIONS_TABLE;
@@ -32,7 +33,7 @@ exports.connect = async (event) => {
     }
   };
 
-  await dynamo.put(params).promise()
+  await dynamo.put(params).promise();
 
   return {
     statusCode: 200,
@@ -56,7 +57,7 @@ exports.disconnect = async (event) => {
     }
   };
 
-  await dynamo.delete(params).promise()
+  await dynamo.delete(params).promise();
 
    return {
     statusCode: 200,
@@ -100,9 +101,12 @@ exports.notify = async (event) => {
 exports.authorize = async (event) => {
     let authToken = event.queryStringParameters.auth
     let resource = event.methodArn;
-    let effect = true;
+    let effect = 'Allow';
   
     console.log("authToken " + authToken + " resource " + resource);
+
+    // const resp = await isValidToken(authToken);
+    // console.log('resp: ', resp);
   
     return {
       "principalId": "user",
@@ -157,6 +161,35 @@ const postToConnection = async (connectionId, data) => {
             throw error;
         }
     }
+}
+
+
+const isValidToken = async (token) => {
+    console.log('isValidToken');
+    
+    const response = await new Promise((resolve, reject) => {
+        let dataString = '';
+        const req = https.get("https://kan-r.com/ws/test", (res) => {
+          res.on('data', chunk => {
+            dataString += chunk;
+          });
+          res.on('end', () => {
+            resolve({
+                statusCode: 200,
+                body: JSON.stringify(JSON.parse(dataString), null, 4)
+            });
+          });
+        });
+        
+        req.on('error', (e) => {
+          reject({
+              statusCode: 500,
+              body: 'Something went wrong!'
+          });
+        });
+    });
+    
+    return response;
 }
 
 

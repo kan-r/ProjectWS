@@ -5,9 +5,9 @@ provider:
   runtime: nodejs14.x
   region: ${opt:region, 'ap-southeast-2'}
   stage: ${opt:stage, 'dev'}
-  stackName: cas360-ws-api
-  apiName: cas360-rest-api
-  websocketsApiName: cas360-ws-api
+  stackName: cas360-ws-api-${self:provider.stage}
+  apiName: cas360-rest-api-${self:provider.stage}
+  websocketsApiName: cas360-ws-api-${self:provider.stage}
   endpointType: regional
   lambdaHashingVersion: "20201221"
   logRetentionInDays: 1
@@ -24,7 +24,7 @@ provider:
           - Ref: AWS::Region
           - .amazonaws.com/
           - ${self:provider.stage}
-    WS_CONNECTIONS_TABLE: cas360WSConnections
+    WS_CONNECTIONS_TABLE: cas360WSConnections-${self:provider.stage}
 
   deploymentBucket:
     # name: deployment.bglcorp.com.au
@@ -41,11 +41,11 @@ provider:
             Fn::GetAtt:
               - cas360WSConnectionsTable
               - Arn
-        - Effect: Allow
-          Action:
-            - apigateway:POST
+        # - Effect: Allow
+        #   Action:
+        #     - apigateway:POST
             # - apigateway:GET
-          Resource: arn:aws:apigateway:${self:provider.region}::/restapis/*
+          # Resource: arn:aws:apigateway:${self:provider.region}::/restapis/*
         # - Effect: Allow
         #   Action:
         #     - apigateway:*
@@ -57,6 +57,11 @@ functions:
     events:
       - websocket:
           route: $connect
+          # authorizer:
+          #   name: auth
+          #   identitySource: 
+          #     - 'route.request.querystring.auth'
+              # - 'route.request.header.auth'
   disconnect:
     handler: handler.disconnect
     events:
@@ -74,6 +79,8 @@ functions:
           path: notifications/{Id}
           method: POST
           cors: true
+  auth:
+    handler: handler.authorize
 
 resources:
   Resources:

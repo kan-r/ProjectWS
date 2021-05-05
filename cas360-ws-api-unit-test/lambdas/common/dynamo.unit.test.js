@@ -27,6 +27,12 @@ test('dynamo put works', async () => {
     expect(item).toBe(items[0]);
 });
 
+// test('dynamo delete works', async () => {
+//     await dynamo.put(items[0], validTableName);
+//     const item = await dynamo.delete(items[0].connectionId, validTableName);
+//     expect(item).toBe(items[0]);
+// });
+
 test('dynamo function get works', async () => {
     await dynamo.put(items[0], validTableName);
     await dynamo.put(items[1], validTableName);

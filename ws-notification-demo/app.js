@@ -8,7 +8,7 @@ angular.module('WsDemoApp', [])
   let logs = [];
   
   $scope.connect = function(endPoint, clientId) {
-    const url = `${endPoint}?clientId=${clientId}`;
+    const url = `${endPoint}?clientId=${clientId}&auth=kantoken`;
     console.log('connect: ', url);
     this.websocket = new WebSocket(url);
 
