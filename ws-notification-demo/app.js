@@ -1,14 +1,14 @@
 angular.module('WsDemoApp', [])
 .controller('WsDemoController', function($scope, $http) {
   $scope.clientId = 'Kan';
-  $scope.endPoint = 'wss://2e4hcbdp5e.execute-api.ap-southeast-2.amazonaws.com/dev';
+  $scope.endPoint = 'wss://xiznjo3l62.execute-api.ap-southeast-2.amazonaws.com/dev';
   $scope.message = 'Hello from the Client';
   $scope.restEndPoint = 'http://localhost:8082/notify';
   
   let logs = [];
   
   $scope.connect = function(endPoint, clientId) {
-    const url = `${endPoint}?clientId=${clientId}&auth=kantoken`;
+    const url = `${endPoint}?clientId=${clientId}&clientName=Ranganathan`;
     console.log('connect: ', url);
     this.websocket = new WebSocket(url);
 

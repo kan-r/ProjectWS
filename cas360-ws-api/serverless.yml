@@ -24,7 +24,7 @@ provider:
           - Ref: AWS::Region
           - .amazonaws.com/
           - ${self:provider.stage}
-    WS_CONNECTIONS_TABLE: cas360WSConnections-${self:provider.stage}
+    WS_CONNECTIONS_TABLE: cas360-WSConnections-${self:provider.stage}
 
   deploymentBucket:
     # name: deployment.bglcorp.com.au
@@ -57,10 +57,10 @@ functions:
     events:
       - websocket:
           route: $connect
-          # authorizer:
-          #   name: auth
-          #   identitySource: 
-          #     - 'route.request.querystring.auth'
+          authorizer:
+            name: auth
+            identitySource: 
+              - 'route.request.querystring.clientName'
               # - 'route.request.header.auth'
   disconnect:
     handler: handler.disconnect

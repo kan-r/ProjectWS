@@ -1,7 +1,8 @@
 'use strict';
 
 const aws = require('aws-sdk');
-const https = require('https');
+// const https = require('https');
+const axios = require('axios');
 const dynamo = new aws.DynamoDB.DocumentClient();
 
 const WS_CONNECTIONS_TABLE = process.env.WS_CONNECTIONS_TABLE;
@@ -77,7 +78,7 @@ exports.default = async (event) => {
 
 
 exports.notify = async (event) => {
-    console.log('NOTIFY: ' + JSON.stringify(event))
+    console.log('NOTIFY: ' + JSON.stringify(event));
   
     const clientId = event.pathParameters.Id;
     const body = event.body
@@ -97,16 +98,19 @@ exports.notify = async (event) => {
 }
 
 
-// to be changed
 exports.authorize = async (event) => {
-    let authToken = event.queryStringParameters.auth
-    let resource = event.methodArn;
-    let effect = 'Allow';
-  
-    console.log("authToken " + authToken + " resource " + resource);
+    console.log('AUTHORIZE: ' + JSON.stringify(event));
 
-    // const resp = await isValidToken(authToken);
-    // console.log('resp: ', resp);
+    const { clientId, clientName } = event.queryStringParameters;
+    const { methodArn } = event;
+    const { Origin } = event.headers;
+
+    let effect = 'Deny';
+  
+    const resp = await isAuthorized(clientId, clientName, Origin);
+    if(resp){
+        effect = 'Allow';
+    }
   
     return {
       "principalId": "user",
@@ -116,11 +120,41 @@ exports.authorize = async (event) => {
           {
             "Action": "execute-api:Invoke",
             "Effect": effect,
-            "Resource": resource
+            "Resource": methodArn
           }
         ]
       }
     };
+}
+
+
+const isAuthorized = async (clientId, clientName, ipAddress) => {
+    console.log('isAuthorized');
+
+    const authEndpoint = 'https://kan-r.com/ws/auth';
+    const authToken = 'cas360';
+
+    const data = {
+        'clientId': clientId,
+        'clientName': clientName,
+        'ipAddress': ipAddress
+    }
+
+    const options = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authToken
+        }
+    }
+
+    try {
+        const resp = await axios.post(authEndpoint, data, options);
+        console.log('Resp: ', resp);
+        return true;
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
 }
 
 
@@ -161,35 +195,6 @@ const postToConnection = async (connectionId, data) => {
             throw error;
         }
     }
-}
-
-
-const isValidToken = async (token) => {
-    console.log('isValidToken');
-    
-    const response = await new Promise((resolve, reject) => {
-        let dataString = '';
-        const req = https.get("https://kan-r.com/ws/test", (res) => {
-          res.on('data', chunk => {
-            dataString += chunk;
-          });
-          res.on('end', () => {
-            resolve({
-                statusCode: 200,
-                body: JSON.stringify(JSON.parse(dataString), null, 4)
-            });
-          });
-        });
-        
-        req.on('error', (e) => {
-          reject({
-              statusCode: 500,
-              body: 'Something went wrong!'
-          });
-        });
-    });
-    
-    return response;
 }
 
 
