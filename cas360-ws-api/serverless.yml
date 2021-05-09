@@ -25,6 +25,7 @@ provider:
           - .amazonaws.com/
           - ${self:provider.stage}
     WS_CONNECTIONS_TABLE: cas360-WSConnections-${self:provider.stage}
+    WS_AUTH_ENDPOINT: 'https://kan-r.com/ws/auth'
 
   deploymentBucket:
     # name: deployment.bglcorp.com.au
@@ -41,6 +42,13 @@ provider:
             Fn::GetAtt:
               - cas360WSConnectionsTable
               - Arn
+        - Effect: Allow
+          Action:
+            - ssm:*
+          Resource: 
+            - arn:aws:ssm:${self:provider.region}:196363831732:parameter/cas360/*
+            # -arn:aws:ssm:ap-southeast-2:196363831732:parameter/cas360/ws-auth
+            
         # - Effect: Allow
         #   Action:
         #     - apigateway:POST

@@ -4,8 +4,10 @@ const aws = require('aws-sdk');
 // const https = require('https');
 const axios = require('axios');
 const dynamo = new aws.DynamoDB.DocumentClient();
+const ssm = new aws.SSM();
 
 const WS_CONNECTIONS_TABLE = process.env.WS_CONNECTIONS_TABLE;
+const WS_AUTH_ENDPOINT = process.env.WS_AUTH_ENDPOINT;
 
 const ws = new aws.ApiGatewayManagementApi({
     endpoint: process.env.WS_ENDPOINT
@@ -131,8 +133,10 @@ exports.authorize = async (event) => {
 const isAuthorized = async (clientId, clientName, ipAddress) => {
     console.log('isAuthorized');
 
-    const authEndpoint = 'https://kan-r.com/ws/auth';
-    const authToken = 'cas360';
+    const authEndpoint = WS_AUTH_ENDPOINT;
+    let authToken = 'cas360';
+
+    authToken = await getSystemParameter('/cas360/ws-auth');
 
     const data = {
         'clientId': clientId,
@@ -155,6 +159,23 @@ const isAuthorized = async (clientId, clientName, ipAddress) => {
         console.error(error);
         return false;
     }
+}
+
+const getSystemParameter = async (paramName) => {
+    const params = {
+        Name: paramName,
+        WithDecryption: false
+    };
+
+    try {
+        const resp = await ssm.getParameter(params).promise();
+        console.log('paramValue: ', resp);
+        return resp.Parameter.Value;
+    } catch (error) {
+        console.error(error);
+        return '';
+    }
+    
 }
 
 
