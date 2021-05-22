@@ -5,9 +5,9 @@ provider:
   runtime: nodejs14.x
   region: ${opt:region, 'ap-southeast-2'}
   stage: ${opt:stage, 'dev'}
-  stackName: cas360-ws-api-${self:provider.stage}
-  apiName: cas360-rest-api-${self:provider.stage}
-  websocketsApiName: cas360-ws-api-${self:provider.stage}
+  stackName: ${self:service}-${self:provider.stage}
+  # apiName: cas360-rest-api-${self:provider.stage}
+  websocketsApiName: ${self:service}-${self:provider.stage}
   endpointType: regional
   lambdaHashingVersion: "20201221"
   logRetentionInDays: 1
@@ -19,7 +19,8 @@ provider:
     WS_ENDPOINT:
       Fn::Join:
         - ''
-        - - Ref: WebsocketsApi
+        - - wss://
+          - Ref: WebsocketsApi
           - .execute-api.
           - Ref: AWS::Region
           - .amazonaws.com/
@@ -46,7 +47,7 @@ provider:
           Action:
             - ssm:*
           Resource: 
-            - arn:aws:ssm:${self:provider.region}:196363831732:parameter/cas360/*
+            - arn:aws:ssm:${self:provider.region}:196363831732:parameter/*
             # -arn:aws:ssm:ap-southeast-2:196363831732:parameter/cas360/ws-auth
             
         # - Effect: Allow
@@ -82,11 +83,11 @@ functions:
           route: $default
   notify:
     handler: handler.notify
-    events:
-      - http:
-          path: notifications/{Id}
-          method: POST
-          cors: true
+    # events:
+    #   - http:
+    #       path: notifications/{Id}
+    #       method: POST
+    #       cors: true
   auth:
     handler: handler.authorize
 
@@ -108,8 +109,15 @@ resources:
             AttributeName: ttl
             Enabled: true
           BillingMode: PAY_PER_REQUEST
-# extensions:
-#   IamRoleCustomResourcesLambdaExecution:
-#     Properties:
-#       PermissionsBoundary: arn:aws:iam::741610524140:policy/SecOps-Boundary
-          
+    cas360WSApiEndpoint:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /${self:provider.stage}/cas360/web/WS_API_ENDPOINT
+        Type: String
+        Value: ${self:provider.environment.WS_ENDPOINT}
+    cas360WSLambdaNotify:
+      Type: AWS::SSM::Parameter
+      Properties:
+        Name: /${self:provider.stage}/cas360/web/WS_LAMBDA_NOTIFY
+        Type: String
+        Value: ${self:provider.websocketsApiName}-notify
