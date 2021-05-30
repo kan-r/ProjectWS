@@ -32,15 +32,19 @@ public class ParamStoreController {
 	}
 	
 	@GetMapping("/params")
-	public Map<String, String> getParams(@RequestParam String path) {
-		logger.info("/params?path={}", path);
+	public Map<String, String> getParams(@RequestParam String path, @RequestParam String name) {
+		logger.info("/params?path={}&name={}", path, name);
 		
 		try {
-			return paramStoreService.getParams(Regions.AP_SOUTHEAST_2, path);
+			if (name.isBlank()) {
+				return paramStoreService.getParams2(Regions.AP_SOUTHEAST_2, path);
+			} else {
+				return paramStoreService.getParam(Regions.AP_SOUTHEAST_2, path + "/" + name);
+			}
+			
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 			return null;
 		}
 	}
-
 }
